@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$/geometry-central" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/geometry-central/deps/happly" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/polyscope" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/polyscope/deps/glfw" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/polyscope/deps/happly" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/polyscope/deps/imgui/imgui" vcs="Git" />
+  </component>
+</project>
