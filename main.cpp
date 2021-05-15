@@ -1,9 +1,9 @@
 #include <iostream>
 #include <thread>
-#include <DGtal/base/Common.h>
-#include <DGtal/helpers/StdDefs.h>
-#include <DGtal/helpers/Shortcuts.h>
-#include <DGtal/helpers/ShortcutsGeometry.h>
+#include "DGtal/src/DGtal/base/Common.h"
+#include "DGtal/src/DGtal/helpers/StdDefs.h"
+#include "DGtal/src/DGtal/helpers/Shortcuts.h"
+#include "DGtal/src/DGtal/helpers/ShortcutsGeometry.h"
 #include "polyscope/polyscope.h"
 #include "polyscope/point_cloud.h"
 #include "polyscope/surface_mesh.h"
@@ -14,6 +14,7 @@
 #include "geometrycentral/surface/halfedge_mesh.h"
 #include "geometrycentral/surface/meshio.h"
 #include "geometrycentral/surface/vertex_position_geometry.h"
+#include "geometrycentral/surface/rich_surface_mesh_data.h"
 
 #include "polyscope/deps/args/args/args.hxx"
 #include "CorrectedNormalCurrentFormula.h"
@@ -33,16 +34,19 @@ using namespace geometrycentral;
 using namespace geometrycentral::surface;
 
 // == Geometry-central data
-std::unique_ptr<HalfedgeMesh> mesh;
+std::unique_ptr<geometrycentral::surface::SurfaceMesh> mesh;
 std::unique_ptr<VertexPositionGeometry> geometry;
+
 
 // Polyscope visualization handle, to quickly add data to the surface
 polyscope::SurfaceMesh *psMesh;
 
 // Main variables
 float clampM=10.0;
-float Radius=0.01;
-
+float Radius=0.8;
+FaceData<double> mu0,mu1,mu2;
+VertexData<Vector3> mnormal;
+VertexData<double> mg;
 // Computing principal curvatures k1 and k2
 static
 std::pair<RealVector, RealVector>
@@ -311,6 +315,7 @@ void doWork()
         auto nnA =  geometry->vertexNormals[*vb];
         RealPoint pA(A.x,A.y, A.z);
         RealPoint nA(nnA.x,nnA.y, nnA.z);
+
         normal[*vb] = nA;
         ++vb;
         auto B =  geometry->vertexPositions[*vb];
@@ -407,8 +412,11 @@ void doWork()
     psMesh->addFaceScalarQuantity("Rusinkiewicz Gauss",rusGauss,
                                   polyscope::DataType::SYMMETRIC);
     psMesh->addFaceScalarQuantity("mu0",m0);
+    mu0 = m0;
     psMesh->addFaceScalarQuantity("mu1",m1);
+    mu1 = m1;
     psMesh->addFaceScalarQuantity("mu2",m2);
+    mu2 = m2;
 
     psMesh->addFaceIntrinsicVectorQuantity("CNC dir1",intd1);
     psMesh->addFaceIntrinsicVectorQuantity("CNC dir2",intd2);
@@ -416,14 +424,30 @@ void doWork()
     psMesh->addVertexVectorQuantity("Normal vectors", normal);
 
     psMesh->addVertexScalarQuantity("Monge/JetFitting Gauss", mongeGauss, polyscope::DataType::SYMMETRIC);
+    mg = mongeGauss;
     psMesh->addVertexScalarQuantity("Monge/JetFitting Mean" , mongeMean , polyscope::DataType::SYMMETRIC);
+
     psMesh->addVertexVectorQuantity("Monge/JetFitting norm", mongeNormal);
+    mnormal = mongeNormal;
     psMesh->addVertexVectorQuantity("Monge/JetFitting mindir", mongeMinDir);
     psMesh->addVertexVectorQuantity("Monge/JetFitting maxdir", mongeMaxDir);
     psMesh->addVertexVectorQuantity("Monge/JetFitting CGAL vis", mongeCGAL);
 
 }
 
+void exportMesh()
+{
+    RichSurfaceMeshData richData(*mesh);
+    richData.addMeshConnectivity();
+    richData.addGeometry(*geometry);
+    richData.addFaceProperty("mu0",mu0);
+    richData.addFaceProperty("mu1",mu1);
+    richData.addFaceProperty("mu2",mu2);
+    //richData.addVertexVectorProperty("mn",mnormal);
+    richData.addVertexProperty("mg",mg);
+    richData.write("Test.ply");
+
+}
 
 void myCallback()
 {
@@ -441,6 +465,8 @@ void myCallback()
     ImGui::Text("you may need a larger neighborhood.");
     ImGui::Text("The clamping value is just for visualization purposes");
     ImGui::Text("of the curvature information.");
+    if (ImGui::Button("Export Mesh"))
+        exportMesh();
 }
 
 
@@ -464,7 +490,7 @@ int main(int argc, char **argv)
 
     // Make sure a mesh name was given
     if (!inputFilename) {
-        std::cerr << "Please specify a mesh file as argument" << std::endl;
+        std::cerr << "Use example file instead" << std::endl;
         return EXIT_FAILURE;
     }
 
