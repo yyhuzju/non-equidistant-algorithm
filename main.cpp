@@ -36,7 +36,7 @@ using namespace geometrycentral::surface;
 // == Geometry-central data
 std::unique_ptr<geometrycentral::surface::SurfaceMesh> mesh;
 std::unique_ptr<VertexPositionGeometry> geometry;
-
+std::string outputFile;
 
 // Polyscope visualization handle, to quickly add data to the surface
 polyscope::SurfaceMesh *psMesh;
@@ -256,7 +256,7 @@ void doWork()
     for(Face f : mesh->faces()) {
         vBasisX[f] = geometry->faceTangentBasis[f][0];
     }
-    psMesh->setFaceTangentBasisX(vBasisX);
+    //psMesh->setFaceTangentBasisX(vBasisX);
 
     FaceData<double> cncMean(*mesh);
     FaceData<double> cncGauss(*mesh);
@@ -418,8 +418,8 @@ void doWork()
     psMesh->addFaceScalarQuantity("mu2",m2);
     mu2 = m2;
 
-    psMesh->addFaceIntrinsicVectorQuantity("CNC dir1",intd1);
-    psMesh->addFaceIntrinsicVectorQuantity("CNC dir2",intd2);
+    //psMesh->addFaceIntrinsicVectorQuantity("CNC dir1",intd1);
+    //psMesh->addFaceIntrinsicVectorQuantity("CNC dir2",intd2);
 
     psMesh->addVertexVectorQuantity("Normal vectors", normal);
 
@@ -445,7 +445,8 @@ void exportMesh()
     richData.addFaceProperty("mu2",mu2);
     //richData.addVertexVectorProperty("mn",mnormal);
     richData.addVertexProperty("mg",mg);
-    richData.write("Test.ply");
+
+    richData.write(outputFile);
 
 }
 
@@ -474,7 +475,10 @@ int main(int argc, char **argv)
 {
     // Configure the argument parser
     args::ArgumentParser parser("geometry-central & Polyscope example project");
+    args::HelpFlag help(parser,"help","Display this help menu",{'h',"help"});
+    args::CompletionFlag completion(parser, {"complete"});
     args::Positional<std::string> inputFilename(parser, "mesh", "A mesh file.");
+    args::Positional<std::string> outputFilename(parser,"ply","A richdata file.");
 
     // Parse args
     try {
@@ -490,10 +494,15 @@ int main(int argc, char **argv)
 
     // Make sure a mesh name was given
     if (!inputFilename) {
-        std::cerr << "Use example file instead" << std::endl;
+        std::cerr << "No mesh assigned" << std::endl;
         return EXIT_FAILURE;
     }
-
+    if (!outputFilename){
+       outputFile = "Test.ply" ;
+    }
+    else {
+        outputFile = args::get(outputFilename);
+    }
     polyscope::init();
 
     // Set the callback function
@@ -512,8 +521,8 @@ int main(int argc, char **argv)
     geometry->requireFaceNormals();
     geometry->requireVertexNormals();
     geometry->requireVertexPositions();
-
-
-    polyscope::show();
+    doWork();
+    exportMesh();
+    //polyscope::show();
     return 0;
 }
