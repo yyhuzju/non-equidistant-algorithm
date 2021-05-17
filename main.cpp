@@ -42,8 +42,8 @@ std::string outputFile;
 polyscope::SurfaceMesh *psMesh;
 
 // Main variables
-float clampM=10.0;
-float Radius=0.8;
+float clampM=0;
+float Radius=0.75;
 FaceData<double> mu0,mu1,mu2;
 VertexData<Vector3> mnormal;
 VertexData<double> mg;
@@ -400,6 +400,7 @@ void doWork()
 
     psMesh->addVertexScalarQuantity("NC Gauss",ncGauss,
                                     polyscope::DataType::SYMMETRIC);
+    //mg = ncGauss;
     psMesh->addEdgeScalarQuantity("NC mean",ncMean,
                                   polyscope::DataType::SYMMETRIC);
 
@@ -426,7 +427,7 @@ void doWork()
     psMesh->addVertexScalarQuantity("Monge/JetFitting Gauss", mongeGauss, polyscope::DataType::SYMMETRIC);
     mg = mongeGauss;
     psMesh->addVertexScalarQuantity("Monge/JetFitting Mean" , mongeMean , polyscope::DataType::SYMMETRIC);
-
+    //mg = mongeMean;
     psMesh->addVertexVectorQuantity("Monge/JetFitting norm", mongeNormal);
     mnormal = mongeNormal;
     psMesh->addVertexVectorQuantity("Monge/JetFitting mindir", mongeMinDir);
