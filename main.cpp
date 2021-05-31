@@ -43,7 +43,7 @@ polyscope::SurfaceMesh *psMesh;
 
 // Main variables
 float clampM=0;
-float Radius=0.4;
+float Radius=0.6;
 FaceData<double> mu0,mu1,mu2;
 VertexData<Vector3> mnormal;
 VertexData<double> mg;
@@ -400,7 +400,7 @@ void doWork()
 
     psMesh->addVertexScalarQuantity("NC Gauss",ncGauss,
                                     polyscope::DataType::SYMMETRIC);
-    mg = ncGauss;
+    //mg = ncGauss;
     psMesh->addEdgeScalarQuantity("NC mean",ncMean,
                                   polyscope::DataType::SYMMETRIC);
 
@@ -425,7 +425,7 @@ void doWork()
     psMesh->addVertexVectorQuantity("Normal vectors", normal);
 
     psMesh->addVertexScalarQuantity("Monge/JetFitting Gauss", mongeGauss, polyscope::DataType::SYMMETRIC);
-    //mg = mongeGauss;
+    mg = mongeGauss;
     psMesh->addVertexScalarQuantity("Monge/JetFitting Mean" , mongeMean , polyscope::DataType::SYMMETRIC);
     //mg = mongeMean;
     psMesh->addVertexVectorQuantity("Monge/JetFitting norm", mongeNormal);
