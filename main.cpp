@@ -42,11 +42,13 @@ std::string outputFile;
 polyscope::SurfaceMesh *psMesh;
 
 // Main variables
-float clampM=0;
-float Radius=0.6;
+float clampM=1;
+float Radius=0.1;
 FaceData<double> mu0,mu1,mu2;
 VertexData<Vector3> mnormal;
 VertexData<double> mg;
+FaceData<double> cncg;
+FaceData<double> cncm;
 // Computing principal curvatures k1 and k2
 static
 std::pair<RealVector, RealVector>
@@ -276,36 +278,38 @@ void doWork()
     VertexData<double> ncGauss(*mesh);
     EdgeData<double> ncMean(*mesh);
 
-    VertexData<double> mongeGauss(*mesh);
-    VertexData<double> mongeMean(*mesh);
-    VertexData<Vector3> mongeNormal(*mesh);
-    VertexData<Vector3> mongeMinDir(*mesh);
-    VertexData<Vector3> mongeMaxDir(*mesh);
-    VertexData<Vector3> mongeCGAL(*mesh);
+    //VertexData<double> mongeGauss(*mesh);
+    //VertexData<double> mongeMean(*mesh);
+    //VertexData<Vector3> mongeNormal(*mesh);
+    //VertexData<Vector3> mongeMinDir(*mesh);
+    //VertexData<Vector3> mongeMaxDir(*mesh);
+    //VertexData<Vector3> mongeCGAL(*mesh);
 
 
     auto clamp= [](double v){ return (v< -clampM)? -clampM: (v>clampM)? clampM: v; };
 
     //Default polyscope GC does NC
     std::cout<<"Computing Built-in Gaussian curvature..."<<std::endl;
-    for(auto vert: mesh->vertices())
+    for(auto vert: mesh->vertices()) {
         ncGauss[vert] = clamp(geometry->vertexGaussianCurvatures[vert]);
 
-    //CGALJetFitting
-    std::cout<<"Computing Monge form via JetFitting.."<<std::endl;
-    for(auto vert: mesh->vertices())
-    {
-        double K,H;
-        Vector3 nn,d1,d2,cgal;
-        std::tie(K,H,nn,d1,d2,cgal) = getJetFitting(vert);
-        mongeNormal[vert] = nn;
-        mongeMinDir[vert] = d1;
-        mongeMaxDir[vert] = d2  ;
-        mongeCGAL[vert] = cgal;
-
-        mongeGauss[vert] = K;
-        mongeMean[vert] = H;
     }
+
+    //CGALJetFitting
+    //std::cout<<"Computing Monge form via JetFitting.."<<std::endl;
+    //for(auto vert: mesh->vertices())
+    //{
+    //    double K,H;
+    //   Vector3 nn,d1,d2,cgal;
+    //    std::tie(K,H,nn,d1,d2,cgal) = getJetFitting(vert);
+    //    mongeNormal[vert] = nn;
+    //    mongeMinDir[vert] = d1;
+    //  mongeMaxDir[vert] = d2  ;
+    //    mongeCGAL[vert] = cgal;
+
+    //    mongeGauss[vert] = K;
+     //   mongeMean[vert] = H;
+    //}
 
     std::cout<<"Computing NC, CNC and Rusinkiewicz curvatures..."<<std::endl;
     for(auto face: mesh->faces())
@@ -374,6 +378,8 @@ void doWork()
     for(auto face: mesh->faces())
     {
         cncMean[face] = clamp(m1[face]/m0[face]);
+        //auto tmp1 = cncMean[face];
+        //auto tmp2 = m1[face]/m0[face];
         cncGauss[face] = clamp(m2[face]/m0[face]);
         RealVector dd1,dd2;
         auto nf= geometry->faceNormal(face);
@@ -400,14 +406,16 @@ void doWork()
 
     psMesh->addVertexScalarQuantity("NC Gauss",ncGauss,
                                     polyscope::DataType::SYMMETRIC);
-    //mg = ncGauss;
+    mg = ncGauss;
     psMesh->addEdgeScalarQuantity("NC mean",ncMean,
                                   polyscope::DataType::SYMMETRIC);
 
     psMesh->addFaceScalarQuantity("CNC mean",cncMean,
                                   polyscope::DataType::SYMMETRIC);
+    cncm = cncMean;
     psMesh->addFaceScalarQuantity("CNC Gauss",cncGauss,
                                   polyscope::DataType::SYMMETRIC);
+    cncg = cncGauss;
     psMesh->addFaceScalarQuantity("Rusinkiewicz mean",rusMean,
                                   polyscope::DataType::SYMMETRIC);
     psMesh->addFaceScalarQuantity("Rusinkiewicz Gauss",rusGauss,
@@ -422,17 +430,17 @@ void doWork()
     //psMesh->addFaceIntrinsicVectorQuantity("CNC dir1",intd1);
     //psMesh->addFaceIntrinsicVectorQuantity("CNC dir2",intd2);
 
-    psMesh->addVertexVectorQuantity("Normal vectors", normal);
+    //psMesh->addVertexVectorQuantity("Normal vectors", normal);
 
-    psMesh->addVertexScalarQuantity("Monge/JetFitting Gauss", mongeGauss, polyscope::DataType::SYMMETRIC);
-    mg = mongeGauss;
-    psMesh->addVertexScalarQuantity("Monge/JetFitting Mean" , mongeMean , polyscope::DataType::SYMMETRIC);
+    //psMesh->addVertexScalarQuantity("Monge/JetFitting Gauss", mongeGauss, polyscope::DataType::SYMMETRIC);
+    //mg = mongeGauss;
+    //psMesh->addVertexScalarQuantity("Monge/JetFitting Mean" , mongeMean , polyscope::DataType::SYMMETRIC);
     //mg = mongeMean;
-    psMesh->addVertexVectorQuantity("Monge/JetFitting norm", mongeNormal);
-    mnormal = mongeNormal;
-    psMesh->addVertexVectorQuantity("Monge/JetFitting mindir", mongeMinDir);
-    psMesh->addVertexVectorQuantity("Monge/JetFitting maxdir", mongeMaxDir);
-    psMesh->addVertexVectorQuantity("Monge/JetFitting CGAL vis", mongeCGAL);
+    //psMesh->addVertexVectorQuantity("Monge/JetFitting norm", mongeNormal);
+    //mnormal = mongeNormal;
+    //psMesh->addVertexVectorQuantity("Monge/JetFitting mindir", mongeMinDir);
+    //psMesh->addVertexVectorQuantity("Monge/JetFitting maxdir", mongeMaxDir);
+    //psMesh->addVertexVectorQuantity("Monge/JetFitting CGAL vis", mongeCGAL);
 
 }
 
@@ -446,6 +454,8 @@ void exportMesh()
     richData.addFaceProperty("mu2",mu2);
     //richData.addVertexVectorProperty("mn",mnormal);
     richData.addVertexProperty("mg",mg);
+    richData.addFaceProperty("cncGauss",cncg);
+    richData.addFaceProperty("cncMean",cncm);
 
     richData.write(outputFile);
 
@@ -480,6 +490,7 @@ int main(int argc, char **argv)
     args::CompletionFlag completion(parser, {"complete"});
     args::Positional<std::string> inputFilename(parser, "mesh", "A mesh file.");
     args::Positional<std::string> outputFilename(parser,"ply","A richdata file.");
+    args::Positional<std::float_t> in_radius(parser,"r","integrate radius.");
 
     // Parse args
     try {
@@ -498,11 +509,18 @@ int main(int argc, char **argv)
         std::cerr << "No mesh assigned" << std::endl;
         return EXIT_FAILURE;
     }
+
     if (!outputFilename){
        outputFile = "Test.ply" ;
     }
     else {
         outputFile = args::get(outputFilename);
+    }
+    if(!in_radius){
+        Radius = 0.1;
+    }
+    else{
+        Radius = args::get(in_radius);
     }
     polyscope::init();
 
